@@ -1,4 +1,4 @@
-# Multi-Stage Docker build with Go
+# Multi-Stage Docker build for Go
 
 ## TL;DR
 
@@ -21,7 +21,7 @@ Dockerize your `golang` app easily with the new multi-stage builds from Docker 1
 - Finally, we will demonstrate how multi-stage build can simplify our process
 
 
-# Guide
+## Guide
 
 
 ## Setup
@@ -276,3 +276,14 @@ alextanhongpin/hello-world-01                   latest              d678076674fa
 alextanhongpin/hello-world-00                   latest              2669fc5303bf        8 minutes ago       729MB
 alextanhongpin/hello-world                      latest              71995c167901        12 hours ago        6.54MB
 ```
+
+
+<!--
+Feedback from Chee Leong:
+
+I think for the go app, you should put the executable to `/bin/` `/usr/bin` or `/usr/local/bin` so it’ll be not WORKDIR reliant.
+
+
+[9:31] 
+for the `apk` command, if the index is outdated, you might face error running that.
+-->
