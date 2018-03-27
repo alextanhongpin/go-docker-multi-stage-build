@@ -14,4 +14,25 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 COPY --from=builder /go/src/github.com/alextanhongpin/hello-world/app .
+
+# Metadata params
+ARG VERSION # git rev-parse HEAD
+ARG BUILD_DATE # date -R
+ARG VCS_URL # basename `git rev-parse --show-toplevel`
+ARG VCS_REF # git log -1 --pretty=%h
+ARG NAME # basename `git rev-parse --show-toplevel`
+ARG VENDOR # whoami
+
+# Metadata
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.name=$NAME \
+      org.label-schema.description="Example of multi-stage docker build" \
+      org.label-schema.url="https://example.com" \
+      org.label-schema.vcs-url=https://github.com/alextanhongpin/$VCS_URL \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vendor=$VENDOR \
+      org.label-schema.version=$VERSION \
+      org.label-schema.docker.schema-version="1.0" \
+      org.label-schema.docker.cmd="docker run -d alextanhongpin/hello-world"
+
 CMD ["./app"]
