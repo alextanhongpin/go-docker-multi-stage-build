@@ -16,12 +16,12 @@ WORKDIR /root/
 COPY --from=builder /go/src/github.com/alextanhongpin/hello-world/app .
 
 # Metadata params
-ARG VERSION # git rev-parse HEAD
-ARG BUILD_DATE # date -R
-ARG VCS_URL # basename `git rev-parse --show-toplevel`
-ARG VCS_REF # git log -1 --pretty=%h
-ARG NAME # basename `git rev-parse --show-toplevel`
-ARG VENDOR # whoami
+ARG VERSION
+ARG BUILD_DATE
+ARG VCS_URL
+ARG VCS_REF
+ARG NAME
+ARG VENDOR
 
 # Metadata
 LABEL org.label-schema.build-date=$BUILD_DATE \

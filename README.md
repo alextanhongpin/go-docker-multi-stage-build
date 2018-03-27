@@ -278,6 +278,176 @@ alextanhongpin/hello-world                      latest              71995c167901
 ```
 
 
+## Adding Label Schema
+
+There is a standardised naming conventions for labels in Docker image, which can be found [here](http://label-schema.org/rc1/). In our Dockerfile, we specify the `ARG` to be passed during the build process.
+
+```Dockerfile
+FROM golang:1.9 as builder
+
+WORKDIR /go/src/github.com/alextanhongpin/hello-world
+
+COPY main.go .
+
+RUN go get -d -v
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+
+
+FROM alpine:latest  
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+COPY --from=builder /go/src/github.com/alextanhongpin/hello-world/app .
+
+# Metadata params
+ARG VERSION
+ARG BUILD_DATE
+ARG VCS_URL
+ARG VCS_REF
+ARG NAME
+ARG VENDOR
+
+# Metadata
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.name=$NAME \
+      org.label-schema.description="Example of multi-stage docker build" \
+      org.label-schema.url="https://example.com" \
+      org.label-schema.vcs-url=https://github.com/alextanhongpin/$VCS_URL \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vendor=$VENDOR \
+      org.label-schema.version=$VERSION \
+      org.label-schema.docker.schema-version="1.0" \
+      org.label-schema.docker.cmd="docker run -d alextanhongpin/hello-world"
+
+CMD ["./app"]
+```
+
+We create a simple Makefile to ease storing the variables:
+
+```
+VERSION := $(shell git rev-parse HEAD)
+BUILD_DATE := $(shell date -R)
+VCS_URL := $(shell basename `git rev-parse --show-toplevel`)
+VCS_REF := $(shell git log -1 --pretty=%h)
+NAME := $(shell basename `git rev-parse --show-toplevel`)
+VENDOR := $(shell whoami)
+
+print:
+	@echo VERSION=${VERSION} 
+	@echo BUILD_DATE=${BUILD_DATE}
+	@echo VCS_URL=${VCS_URL}
+	@echo VCS_REF=${VCS_REF}
+	@echo NAME=${NAME}
+	@echo VENDOR=${VENDOR}
+
+build:
+	docker build -t alextanhongpin/hello-go --build-arg VERSION="${VERSION}" \
+	--build-arg BUILD_DATE="${BUILD_DATE}" \
+	--build-arg VCS_URL="${VCS_URL}" \
+	--build-arg VCS_REF="${VCS_REF}" \
+	--build-arg NAME="${NAME}" \
+	--build-arg VENDOR="${VENDOR}" .
+```
+
+Running `$ make print` output:
+
+```
+VERSION=a8dd38b765470fe69ee1127519a586512942f318
+BUILD_DATE=Tue, 27 Mar 2018 11:50:42 +0800
+VCS_URL=go-docker-multi-stage-build
+VCS_REF=a8dd38b
+NAME=go-docker-multi-stage-build
+VENDOR=alextan
+```
+
+Running `$ make build` will now inject those variables into the Docker image during the build process:
+
+```
+docker build -t alextanhongpin/hello-go --build-arg VERSION="a8dd38b765470fe69ee1127519a586512942f318" \
+	--build-arg BUILD_DATE="Tue, 27 Mar 2018 11:51:16 +0800" \
+	--build-arg VCS_URL="go-docker-multi-stage-build" \
+	--build-arg VCS_REF="a8dd38b" \
+	--build-arg NAME="go-docker-multi-stage-build" \
+	--build-arg VENDOR="alextan" .
+Sending build context to Docker daemon  96.77kB
+Step 1/17 : FROM golang:1.9 as builder
+ ---> a6c306bd0b2f
+Step 2/17 : WORKDIR /go/src/github.com/alextanhongpin/hello-world
+ ---> Using cache
+ ---> 13d8a2ac5144
+Step 3/17 : COPY main.go .
+ ---> Using cache
+ ---> 3db9ab323851
+Step 4/17 : RUN go get -d -v
+ ---> Using cache
+ ---> 1c4a3363c51c
+Step 5/17 : RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+ ---> Using cache
+ ---> 16c60c3ee194
+Step 6/17 : FROM alpine:latest
+ ---> 3fd9065eaf02
+Step 7/17 : RUN apk --no-cache add ca-certificates
+ ---> Using cache
+ ---> 09eef72b03f8
+Step 8/17 : WORKDIR /root/
+ ---> Using cache
+ ---> caaa69a4ea86
+Step 9/17 : COPY --from=builder /go/src/github.com/alextanhongpin/hello-world/app .
+ ---> Using cache
+ ---> 4f152587c422
+Step 10/17 : ARG VERSION
+ ---> Using cache
+ ---> 238fd64c8894
+Step 11/17 : ARG BUILD_DATE
+ ---> Using cache
+ ---> d6e82c21c2b7
+Step 12/17 : ARG VCS_URL
+ ---> Using cache
+ ---> 4483ad9a0ebc
+Step 13/17 : ARG VCS_REF
+ ---> Using cache
+ ---> ca3fa7d5de18
+Step 14/17 : ARG NAME
+ ---> Using cache
+ ---> ad4d30434177
+Step 15/17 : ARG VENDOR
+ ---> Using cache
+ ---> b5720f32c236
+Step 16/17 : LABEL org.label-schema.build-date=$BUILD_DATE       org.label-schema.name=$NAME       org.label-schema.description="Example of multi-stage docker build"       org.label-schema.url="https://example.com"       org.label-schema.vcs-url=https://github.com/alextanhongpin/$VCS_URL       org.label-schema.vcs-ref=$VCS_REF       org.label-schema.vendor=$VENDOR       org.label-schema.version=$VERSION       org.label-schema.docker.schema-version="1.0"       org.label-schema.docker.cmd="docker run -d alextanhongpin/hello-world"
+ ---> Running in e4aad0b65c5f
+Removing intermediate container e4aad0b65c5f
+ ---> fbca9a419ee3
+Step 17/17 : CMD ["./app"]
+ ---> Running in 450ea5afb993
+Removing intermediate container 450ea5afb993
+ ---> 0f8e678167f6
+Successfully built 0f8e678167f6
+Successfully tagged alextanhongpin/hello-go:latest
+```
+
+To verify the labels are injected into the image, you can just `docker inspect` the image.
+
+```bash
+# Inspect the labels by iterating through them, and printing them each in a new line
+$ docker inspect --format='{{range $k, $v := .Config.Labels}}{{$k}}={{$v}}{{println}}{{end}}' alextanhongpin/hello-go
+```
+
+Output:
+
+```
+org.label-schema.build-date=Tue, 27 Mar 2018 11:51:16 +0800
+org.label-schema.description=Example of multi-stage docker build
+org.label-schema.docker.cmd=docker run -d alextanhongpin/hello-world
+org.label-schema.docker.schema-version=1.0
+org.label-schema.name=go-docker-multi-stage-build
+org.label-schema.url=https://example.com
+org.label-schema.vcs-ref=a8dd38b
+org.label-schema.vcs-url=https://github.com/alextanhongpin/go-docker-multi-stage-build
+org.label-schema.vendor=alextan
+org.label-schema.version=a8dd38b765470fe69ee1127519a586512942f318
+```
+
 <!--
 Feedback from Chee Leong:
 
