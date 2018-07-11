@@ -1,7 +1,19 @@
+# For a shorter version
+# git rev-parse --short HEAD
+
 VERSION := $(shell git rev-parse HEAD)
-BUILD_DATE := $(shell date -R)
-VCS_URL := $(shell basename `git rev-parse --show-toplevel`)
+
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+# $ date -R
+# Wed, 11 Jul 2018 10:25:26 +0800
+
+# $ date -u +"%Y-%m-%dT%H:%M:%SZ"
+# 2018-07-11T02:25:23Z
+
+VCS_URL := $(shell git config --get remote.origin.url)
+
 VCS_REF := $(shell git log -1 --pretty=%h)
+
 NAME := $(shell basename `git rev-parse --show-toplevel`)
 VENDOR := $(shell whoami)
 
