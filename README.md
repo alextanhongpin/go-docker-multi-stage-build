@@ -21,6 +21,17 @@ Dockerize your `golang` app easily with the new multi-stage builds from Docker 1
 - Finally, we will demonstrate how multi-stage build can simplify our process
 
 
+## Why label-schema.org?
+
+It's important to tag your images with sufficient information because:
+
+1) you want to know where is the source code for the docker build
+2) you want to know which branch/git commit it is using
+3) you want to know when was the last build
+4) you want to know how to rebuild it
+5) you want to know who last build it
+6) you want to know what this docker image do, how to run it and what is the environment variables
+
 ## Guide
 
 
