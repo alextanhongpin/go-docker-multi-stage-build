@@ -11,12 +11,19 @@ RUN go get -d -v
 # It means you did not set CGO_ENABLED=0.
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
+RUN adduser -S -D -H -h /go/src/github.com/alextanhongpin/hello-world user 
+USER user 
 
 FROM alpine:3.8  
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+WORKDIR /app/
+
 COPY --from=builder /go/src/github.com/alextanhongpin/hello-world/app .
+
+RUN mkdir /app/tmp
+RUN adduser -S -D -H -h ./tmp user 
+USER user 
 
 # Metadata params
 ARG VERSION
